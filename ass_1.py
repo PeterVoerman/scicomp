@@ -20,7 +20,6 @@ def simulation(N, t_end, D, delta_t, run_simulation=True):
 
     for i, t in enumerate(np.arange(0, t_end + delta_t, delta_t)):
         grid[1:-1] += constant * (np.roll(grid, 1, axis=0) + np.roll(grid, -1, axis=0) + np.roll(grid, 1, axis=1) + np.roll(grid, -1, axis=1) - 4 * grid)[1:-1]
-
         if i % 100 == 0:
             grid_list.append(grid.copy())
 
@@ -40,22 +39,30 @@ def analytical(D, t, N):
     for n in range(N):
         y = n * step_size
         for i in range(10000):
-            line[n] += erfc((1 - y + 2 * i) / 2 * (D * t) ** 0.5) - erfc((1 + y + 2 * i) / 2 * (D * t) ** 0.5)
+            line[n] += erfc((1 - y + 2 * i) / (2 * (D * t) ** 0.5)) - erfc((1 + y + 2 * i) / (2 * (D * t) ** 0.5))
 
     return line
 
 def plot(grid_list, analytical_list, t, N):
     plt.plot(np.linspace(0, 1, N), grid_list[int(t/100)][:,0], label="Simulation")
-    plt.plot(np.linspace(0, 1, N), analytical_list, label="Analytical")
+    plt.plot(np.linspace(0, 1, 25), analytical_list, label="Analytical")
     plt.legend()
-    plt.savefig(f"1.2_{t}.png")
+    plt.savefig(f"1.2_{t*delta_t:.3f}.png")
     plt.clf()
 
 delta_t = 0.00001
 
-grid_list = simulation(100, 1, 1, delta_t, run_simulation=True)
-print()
+grid_list = simulation(100, 1, 1, delta_t, run_simulation=False)
+
+# for t in [1e-20, 0.001 / delta_t, 0.01 / delta_t, 0.1 / delta_t, 1 / delta_t]:
+#     plot(grid_list, analytical(1, t * delta_t, 25), t, 100)
+
+i = 1
 print(len(grid_list))
 
-for t in [0, 100, 1000, 10000, 100000]:
-    plot(grid_list, analytical(1, t * delta_t, 25), t, 100)
+while np.sum(abs(grid_list[i] - grid_list[i-1])) > 1e-6:
+    plt.imshow(grid_list[i], origin='lower')
+    plt.draw()
+    plt.pause(0.001)
+    plt.clf()
+    i += 1
