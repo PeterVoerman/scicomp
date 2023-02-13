@@ -54,8 +54,8 @@ delta_t = 0.00001
 
 grid_list = simulation(100, 1, 1, delta_t, run_simulation=False)
 
-# for t in [1e-20, 0.001 / delta_t, 0.01 / delta_t, 0.1 / delta_t, 1 / delta_t]:
-#     plot(grid_list, analytical(1, t * delta_t, 25), t, 100)
+for t in [1e-20, 0.001 / delta_t, 0.01 / delta_t, 0.1 / delta_t, 1 / delta_t]:
+    plot(grid_list, analytical(1, t * delta_t, 25), t, 100)
 
 i = 1
 print(len(grid_list))
