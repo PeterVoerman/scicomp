@@ -75,6 +75,31 @@ def successive_over_relaxation(omega):
 
     return grid_list[-1]
 
-jacobi_iteration()
-gauss_seidel()
-successive_over_relaxation(1.7)
+def sink_simulation(x1, x2, y1, y2):
+    N = 100
+
+    grid = np.zeros((N, N))
+    grid[-1] = 1
+
+
+    grid_list = [np.zeros((N, N)), grid.copy()]
+    counter = 0
+    while max(abs(grid_list[-1] - grid_list[-2]).flatten()) > 1e-4:
+        grid[y1:y2, x1:x2] = 0
+        print(f"{max(abs(grid_list[-1] - grid_list[-2]).flatten()):.7f}", end='\r')
+
+        grid[1:-1] = 0.25 * (np.roll(grid, 1, axis=0) + np.roll(grid, -1, axis=0) + np.roll(grid, 1, axis=1) + np.roll(grid, -1, axis=1))[1:-1]
+        grid_list.append(grid.copy())
+        counter += 1
+    print()
+    print(counter)
+
+    return grid_list[-1]
+
+
+# jacobi_iteration()
+# gauss_seidel()
+# successive_over_relaxation(1.7)
+
+plt.imshow(sink_simulation(40, 60, 10, 20), origin='lower')
+plt.show()
