@@ -64,7 +64,16 @@ def gauss_seidel():
 
     return delta_list
 
-def successive_over_relaxation(omega, N=100):
+def sink_check(sinks, x, y):
+    if sinks == []:
+        return False
+    
+    for sink in sinks:
+        if x >= sink[0][0] and x <= sink[0][1] and y >= sink[1][0] and y <= sink[1][1]:
+            return True
+    return False
+
+def successive_over_relaxation(omega, N=100, sinks = []):
     grid = np.zeros((N, N))
     grid[-1] = 1
 
@@ -74,15 +83,16 @@ def successive_over_relaxation(omega, N=100):
     delta = 1
     delta_list = []
 
-    while delta > 1e-5 and delta < 1e5 and counter < 1e4:
+    while delta > 1e-6 and delta < 1e5 and counter < 1e4:
         # print(f"{max(abs(grid_list[-1] - grid_list[-2]).flatten()):.7f}", end='\r')
         new_grid = np.zeros((N, N))
         new_grid[-1] = 1
         for y in range(1, N-1):
-            new_grid[y][0] = 0.25 * (grid[y + 1][0] + grid[y - 1][0] + grid[y][1] + grid[y][-1]) + (1 - omega) * grid[y][0]
+ 
+            new_grid[y][0] = 0.25 * (grid[y + 1][0] + grid[y - 1][0] + grid[y][1] + grid[y][-1]) + (1 - omega) * grid[y][0] if sink_check(sinks, 0, y) == False else 0
             for x in range(1, N-1):
-                new_grid[y][x] = (1 - omega) * grid[y][x] + omega * 0.25 * (grid[y + 1][x] + new_grid[y - 1][x] + grid[y][x + 1] + new_grid[y][x - 1])
-            new_grid[y][-1] = 0.25 * (grid[y + 1][-1] + new_grid[y - 1][-1] + grid[y][-2] + new_grid[y][0]) + (1 - omega) * grid[y][-1]
+                new_grid[y][x] = (1 - omega) * grid[y][x] + omega * 0.25 * (grid[y + 1][x] + new_grid[y - 1][x] + grid[y][x + 1] + new_grid[y][x - 1]) if sink_check(sinks, x, y) == False else 0
+            new_grid[y][-1] = 0.25 * (grid[y + 1][-1] + new_grid[y - 1][-1] + grid[y][-2] + new_grid[y][0]) + (1 - omega) * grid[y][-1] if sink_check(sinks, x, y) == False else 0
 
         grid = new_grid.copy()
         grid_list.append(grid.copy())
@@ -95,6 +105,8 @@ def successive_over_relaxation(omega, N=100):
     # print(counter)
     # print(delta)
 
+    # plt.plot()
+    
     return delta_list
 
 def sink_simulation(x1, x2, y1, y2):
@@ -149,3 +161,11 @@ for N in [25, 50, 75, 100]:
             min_omega = omega
 
     print(f"min_omega = {min_omega}, min_iterations = {min_iterations}")
+
+# for this to work, SOR function must return the final grid.
+# sinks = [[(10,10),(15,16)]] # a sink = [(x1, x2), (y1, y2)]
+# grid = successive_over_relaxation(1.6, 20, sinks)
+# plt.imshow(grid, origin='lower')
+# plt.xlabel("x")
+# plt.ylabel("y")
+# plt.show()
