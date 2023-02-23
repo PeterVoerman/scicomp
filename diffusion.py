@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from scipy.special import erfc
 import pickle
 
-
 def simulation(N, t_end, D, delta_t, run_simulation=True):
     if not run_simulation:
         with open("1.2.pkl", 'rb') as fp:
@@ -43,32 +42,27 @@ def analytical(D, t, N):
 
     return line
 
-def plot(grid_list, analytical_list, t, N, animation_frames, delta_t):
-    plt.plot(np.linspace(0, 1, N), grid_list[int(delta_t*t/animation_frames)][:,0], label="Simulation")
-    plt.plot(np.linspace(0, 1, N), analytical_list, label="Analytical")
-    plt.legend()
-    plt.savefig(f"1.2_{t*delta_t:.3f}.png")
-    plt.clf()
 
 delta_t = 0.00001
 animation_frames = 100
 
 grid_list = simulation(100, 1, 1, delta_t, run_simulation=False)
 
-for t in [1e-20, 0.001, 0.01, 0.1, 1]:
-    analytical_list = analytical(1, t, 100)
-    plt.plot(np.linspace(0, 1, 100), grid_list[int(t/(animation_frames*delta_t))+1][:,0], label=f"Simulation t={t:.3f}")
-    plt.plot(np.linspace(0, 1, 100), analytical_list, label=f"Analytical t={t:.3f}", linestyle='--')
-plt.legend()
-plt.savefig("experimental_analytical.png")
-plt.clf()
+# for t in [1e-20, 0.001, 0.01, 0.1, 1]:
+#     analytical_list = analytical(1, t, 100)
+#     plt.plot(np.linspace(0, 1, 100), grid_list[int(t/(animation_frames*delta_t))+1][:,0], label=f"Simulation t={t:.3f}")
+#     plt.plot(np.linspace(0, 1, 100), analytical_list, label=f"Analytical t={t:.3f}", linestyle='--')
+# plt.legend()
+# plt.xlabel("x")
+# plt.ylabel("Concentration")
+# plt.savefig("experimental_analytical.png")
+# plt.clf()
 
 i = 1
 print(len(grid_list))
 
-# while np.sum(abs(grid_list[i] - grid_list[i-1])) > 1e-6:
-#     plt.imshow(grid_list[i], origin='lower')
-#     plt.draw()
-#     plt.pause(0.001)
-#     plt.clf()
-#     i += 1
+for t in [0, 0.001, 0.01, 0.1, 1]:
+    plt.imshow(grid_list[int(t/(animation_frames*delta_t))], origin='lower')
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.savefig(f"animation_{t}.png")
