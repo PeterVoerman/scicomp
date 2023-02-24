@@ -108,37 +108,37 @@ def successive_over_relaxation(omega, N=100, sinks = [], plot_grid=False):
 
 
 
-# jacobi_list = jacobi_iteration()
-# gauss_list = gauss_seidel()
-# plt.plot(jacobi_list, label='Jacobi')
-# plt.plot(gauss_list, label='Gauss-Seidel')
-# for omega in np.arange(1.1, 1.8, 0.1):
-#     print(omega)
-#     sor_list = successive_over_relaxation(omega)
-#     plt.plot(sor_list, label=f'SOR {omega:.1f}')
+jacobi_list = jacobi_iteration()
+gauss_list = gauss_seidel()
+plt.plot(jacobi_list, label='Jacobi')
+plt.plot(gauss_list, label='Gauss-Seidel')
+for omega in np.arange(1.1, 1.8, 0.1):
+    print(omega)
+    sor_list = successive_over_relaxation(omega)
+    plt.plot(sor_list, label=f'SOR {omega:.1f}')
 
 
-# plt.legend()
-# plt.yscale('log')
-# plt.xlabel("Iteration")
-# plt.ylabel("Delta")
-# plt.tight_layout()
-# plt.savefig("jacobi_gauss_sor.png")
+plt.legend()
+plt.yscale('log')
+plt.xlabel("Iteration")
+plt.ylabel("Delta")
+plt.tight_layout()
+plt.savefig("jacobi_gauss_sor.png")
 
 
 
-# min_iterations = 1e5
-# for N in [25, 50, 75, 100]:
-#     print(f"N = {N}")
-#     for omega in np.arange(1.4, 1.6, 0.01):
-#         print(f"omega = {omega}", end='\r')
-#         delta_list = successive_over_relaxation(omega, N)
-#         iterations = len(delta_list)
-#         if iterations < min_iterations and delta_list[-1] < 1:
-#             min_iterations = iterations
-#             min_omega = omega
+min_iterations = 1e5
+for N in [25, 50, 75, 100]:
+    print(f"N = {N}")
+    for omega in np.arange(1.4, 1.6, 0.01):
+        print(f"omega = {omega}", end='\r')
+        delta_list = successive_over_relaxation(omega, N)
+        iterations = len(delta_list)
+        if iterations < min_iterations and delta_list[-1] < 1:
+            min_iterations = iterations
+            min_omega = omega
 
-#     print(f"min_omega = {min_omega}, min_iterations = {min_iterations}")
+    print(f"min_omega = {min_omega}, min_iterations = {min_iterations}")
 
 # for this to work, SOR function must return the final grid.
 sinks = [[(20,40),(70,80)], [(70, 80), (80, 96)]] # a sink = [(x1, x2), (y1, y2)]
