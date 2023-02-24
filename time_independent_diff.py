@@ -64,7 +64,16 @@ def gauss_seidel():
 
     return delta_list
 
-def successive_over_relaxation(omega, N=100):
+def sink_check(sinks, x, y):
+    if sinks == []:
+        return False
+    
+    for sink in sinks:
+        if x >= sink[0][0] and x <= sink[0][1] and y >= sink[1][0] and y <= sink[1][1]:
+            return True
+    return False
+
+def successive_over_relaxation(omega, N=100, sinks = []):
     grid = np.zeros((N, N))
     grid[-1] = 1
 
@@ -98,6 +107,8 @@ def successive_over_relaxation(omega, N=100):
     # print(counter)
     # print(delta)
 
+    # plt.plot()
+    
     return delta_list
 
 def sink_simulation(x1, x2, y1, y2):
@@ -153,3 +164,11 @@ for N in [25, 50, 75, 100]:
             min_omega = omega
 
     print(f"min_omega = {min_omega}, min_iterations = {min_iterations}")
+
+# for this to work, SOR function must return the final grid.
+# sinks = [[(10,10),(15,16)]] # a sink = [(x1, x2), (y1, y2)]
+# grid = successive_over_relaxation(1.6, 20, sinks)
+# plt.imshow(grid, origin='lower')
+# plt.xlabel("x")
+# plt.ylabel("y")
+# plt.show()
