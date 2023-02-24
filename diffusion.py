@@ -48,21 +48,20 @@ animation_frames = 100
 
 grid_list = simulation(100, 1, 1, delta_t, run_simulation=False)
 
-# for t in [1e-20, 0.001, 0.01, 0.1, 1]:
-#     analytical_list = analytical(1, t, 100)
-#     plt.plot(np.linspace(0, 1, 100), grid_list[int(t/(animation_frames*delta_t))+1][:,0], label=f"Simulation t={t:.3f}")
-#     plt.plot(np.linspace(0, 1, 100), analytical_list, label=f"Analytical t={t:.3f}", linestyle='--')
-# plt.legend()
-# plt.xlabel("x")
-# plt.ylabel("Concentration")
-# plt.savefig("experimental_analytical.png")
-# plt.clf()
+for t in [1e-20, 0.001, 0.01, 0.1, 1]:
+    analytical_list = analytical(1, t, 100)
+    plt.plot(np.linspace(0, 1, 100), grid_list[int(t/(animation_frames*delta_t))+1][:,0], label=f"Simulation t={t:.3f}")
+    plt.plot(np.linspace(0, 1, 100), analytical_list, label=f"Analytical t={t:.3f}", linestyle='--')
+plt.legend()
+plt.xlabel("y")
+plt.ylabel("Concentration")
+plt.savefig("experimental_analytical.png")
+plt.clf()
 
-i = 1
-print(len(grid_list))
+# print(len(grid_list))
 
-for t in [0, 0.001, 0.01, 0.1, 1]:
-    plt.imshow(grid_list[int(t/(animation_frames*delta_t))], origin='lower')
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.savefig(f"animation_{t}.png")
+# for t in [0, 0.001, 0.01, 0.1, 1]:
+#     plt.imshow(grid_list[int(t/(animation_frames*delta_t))], origin='lower')
+#     plt.xlabel("x")
+#     plt.ylabel("y")
+#     plt.savefig(f"animation_{t}.png")
