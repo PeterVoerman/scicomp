@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import pickle
 
 start = time.time()
 
-def successive_over_relaxation(grid, cluster, omega = 1):
+def successive_over_relaxation(grid, cluster, t, omega = 1, make_pickle = False, pickle_name = ''):
     counter = 0
     delta = 1
 
@@ -24,6 +25,10 @@ def successive_over_relaxation(grid, cluster, omega = 1):
         grid = new_grid.copy()
 
         counter += 1
+
+    if make_pickle:
+        with open(f'{pickle_name}.plk', 'wb') as save_file:
+            pickle.dump(grid, save_file)
     
     return grid, counter
 
@@ -80,6 +85,13 @@ def make_eta_plot(eta):
 
     grid = np.zeros((N,N))
     grid = np.array([np.array([x/N for y in range(N)]) for x in range(N)])
+
+    # with open("no_sink_N100.pkl", 'rb') as save_file:
+    # grid = pickle.load(save_file)
+
+    grid = np.zeros((N,N))
+    grid = successive_over_relaxation(grid, [], 0, omega = 1, make_pickle = True, pickle_name = f'N{N}')
+    quit()
 
     cluster = [(0, N // 2)]
 
