@@ -88,11 +88,25 @@ def successive_over_relaxation(omega, N=100, sinks = [], plot_grid=False):
         # print(f"{max(abs(grid_list[-1] - grid_list[-2]).flatten()):.7f}", end='\r')
         new_grid = np.zeros((N, N))
         new_grid[-1] = 1
-        for y in range(1, N-1):
-            new_grid[y][0] = 0.25 * omega * (grid[y + 1][0] + grid[y - 1][0] + grid[y][1] + grid[y][-1]) + (1 - omega) * grid[y][0] if sink_check(sinks, 0, y) == False else 0
-            for x in range(1, N-1):
-                new_grid[y][x] = (1 - omega) * grid[y][x] + omega * 0.25 * (grid[y + 1][x] + new_grid[y - 1][x] + grid[y][x + 1] + new_grid[y][x - 1]) if sink_check(sinks, x, y) == False else 0
-            new_grid[y][-1] = 0.25 * omega * (grid[y + 1][-1] + new_grid[y - 1][-1] + grid[y][-2] + new_grid[y][0]) + (1 - omega) * grid[y][-1] if sink_check(sinks, x + 1, y) == False else 0
+        # dit jaar
+        # for y in range(1, N-1):
+        #     new_grid[y][0] = 0.25 * omega * (grid[y + 1][0] + grid[y - 1][0] + grid[y][1] + grid[y][-1]) + (1 - omega) * grid[y][0] if sink_check(sinks, 0, y) == False else 0
+            
+        #     for x in range(1, N-1):
+        #         new_grid[y][x] = omega * 0.25 * (grid[y + 1][x] + new_grid[y - 1][x] + grid[y][x + 1] + new_grid[y][x - 1]) + (1 - omega) * grid[y][x] if sink_check(sinks, x, y) == False else 0
+            
+        #     new_grid[y][-1] = 0.25 * omega * (grid[y + 1][-1] + new_grid[y - 1][-1] + grid[y][-2] + new_grid[y][0]) + (1 - omega) * grid[y][-1] if sink_check(sinks, x + 1, y) == False else 0
+        
+        # vorig jaar
+        for y in range(1, N - 1):
+            new_grid[y][0] = omega / 4 * (grid[y + 1][0] + new_grid[y - 1][0] + grid[y][1] + grid[y][-2]) + (1 - omega) * grid[y][0] if sink_check(sinks, x + 1, y) == False else 0
+
+            for x in range(1, N - 1):
+                new_grid[y][x] = omega / 4 * (grid[y + 1][x] + new_grid[y - 1][x] + grid[y][x + 1] + new_grid[y][x - 1]) + (1 - omega) * grid[y][x] if sink_check(sinks, x + 1, y) == False else 0
+
+            
+            new_grid[y][-1] = omega / 4 * (grid[y + 1][-1] + new_grid[y - 1][-1] + grid[y][1] + new_grid[y][-2]) + (1 - omega) * grid[y][-1] if sink_check(sinks, x + 1, y) == False else 0
+ 
 
         grid = new_grid.copy()
         grid_list.append(grid.copy())
