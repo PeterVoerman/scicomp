@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
+import time
 
-def run_simulation(initial_u, initial_v, filename):
+def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animation=False, num_frames=None):
     dt = 1
     dx = 1
     Du = 0.16
@@ -25,24 +26,38 @@ def run_simulation(initial_u, initial_v, filename):
     t = 0
     diff = 1
 
-    while diff > 1e-6 and t < tend:
+    laplace_u = np.zeros_like(u)
+    laplace_v = np.zeros_like(v)
+
+    while diff > 1e-4 and t < tend:
         print(f"t={t}, diff={diff:.2E}", end="\r")
 
-        u[0, :] = u[1, :]
-        u[-1, :] = u[-2, :]
-        u[:, 0] = u[:, 1]
-        u[:, -1] = u[:, -2]
-        v[0, :] = v[1, :]
-        v[-1, :] = v[-2, :]
-        v[:, 0] = v[:, 1]
-        v[:, -1] = v[:, -2]
+        laplace_u[1:-1, 1:-1] = (np.roll(u, -1, axis=0)[1:-1, 1:-1] + np.roll(u, 1, axis=0)[1:-1, 1:-1] + np.roll(u, -1, axis=1)[1:-1, 1:-1] + np.roll(u, 1, axis=1)[1:-1, 1:-1] - 4 * u[1:-1, 1:-1]) / dx**2
+        laplace_v[1:-1, 1:-1] = (np.roll(v, -1, axis=0)[1:-1, 1:-1] + np.roll(v, 1, axis=0)[1:-1, 1:-1] + np.roll(v, -1, axis=1)[1:-1, 1:-1] + np.roll(v, 1, axis=1)[1:-1, 1:-1] - 4 * v[1:-1, 1:-1]) / dx**2
 
-        laplace_u = (np.roll(u, -1, axis=0) + np.roll(u, 1, axis=0) + np.roll(u, -1, axis=1) + np.roll(u, 1, axis=1) - 4 * u) / dx**2
-        laplace_v = (np.roll(v, -1, axis=0) + np.roll(v, 1, axis=0) + np.roll(v, -1, axis=1) + np.roll(v, 1, axis=1) - 4 * v) / dx**2
+        laplace_u[0, 1:-1] = (u[1, 1:-1] + np.roll(u, -1, axis=1)[0, 1:-1] + np.roll(u, 1, axis=1)[0, 1:-1] - 3 * u[0, 1:-1]) / dx**2
+        laplace_u[-1, 1:-1] = (u[-2, 1:-1] + np.roll(u, -1, axis=1)[-1, 1:-1] + np.roll(u, 1, axis=1)[-1, 1:-1] - 3 * u[-1, 1:-1]) / dx**2
+        laplace_u[1:-1, 0] = (np.roll(u, -1, axis=0)[1:-1, 0] + np.roll(u, 1, axis=0)[1:-1, 0] + u[1:-1, 1] - 3 * u[1:-1, 0]) / dx**2
+        laplace_u[1:-1, -1] = (np.roll(u, -1, axis=0)[1:-1, -1] + np.roll(u, 1, axis=0)[1:-1, -1] + u[1:-1, -2] - 3 * u[1:-1, -1]) / dx**2
 
+        laplace_v[0, 1:-1] = (v[1, 1:-1] + np.roll(v, -1, axis=1)[0, 1:-1] + np.roll(v, 1, axis=1)[0, 1:-1] - 3 * v[0, 1:-1]) / dx**2
+        laplace_v[-1, 1:-1] = (v[-2, 1:-1] + np.roll(v, -1, axis=1)[-1, 1:-1] + np.roll(v, 1, axis=1)[-1, 1:-1] - 3 * v[-1, 1:-1]) / dx**2
+        laplace_v[1:-1, 0] = (np.roll(v, -1, axis=0)[1:-1, 0] + np.roll(v, 1, axis=0)[1:-1, 0] + v[1:-1, 1] - 3 * v[1:-1, 0]) / dx**2
+        laplace_v[1:-1, -1] = (np.roll(v, -1, axis=0)[1:-1, -1] + np.roll(v, 1, axis=0)[1:-1, -1] + v[1:-1, -2] - 3 * v[1:-1, -1]) / dx**2
 
-        u[1:-1, 1:-1] += dt * (Du * laplace_u[1:-1, 1:-1] - u[1:-1, 1:-1] * v[1:-1, 1:-1]**2 + f * (1 - u[1:-1, 1:-1]))
-        v[1:-1, 1:-1] += dt * (Dv * laplace_v[1:-1, 1:-1]  + u[1:-1, 1:-1] * v[1:-1, 1:-1]**2 - (f + k) * v[1:-1, 1:-1])
+        laplace_u[0, 0] = (u[1, 0] + u[0, 1] - 2 * u[0, 0]) / dx**2
+        laplace_u[-1, 0] = (u[-2, 0] + u[-1, 1] - 2 * u[-1, 0]) / dx**2
+        laplace_u[0, -1] = (u[1, -1] + u[0, -2] - 2 * u[0, -1]) / dx**2
+        laplace_u[-1, -1] = (u[-2, -1] + u[-1, -2] - 2 * u[-1, -1]) / dx**2
+
+        laplace_v[0, 0] = (v[1, 0] + v[0, 1] - 2 * v[0, 0]) / dx**2
+        laplace_v[-1, 0] = (v[-2, 0] + v[-1, 1] - 2 * v[-1, 0]) / dx**2
+        laplace_v[0, -1] = (v[1, -1] + v[0, -2] - 2 * v[0, -1]) / dx**2
+        laplace_v[-1, -1] = (v[-2, -1] + v[-1, -2] - 2 * v[-1, -1]) / dx**2
+
+        u += dt * (Du * laplace_u - u * v**2 + f * (1 - u))
+        v += dt * (Dv * laplace_v + u * v**2 - (f + k) * v)
+
 
         if t % plot_interval == 0:
             u_list.append(u.copy())
@@ -51,30 +66,42 @@ def run_simulation(initial_u, initial_v, filename):
         t += dt
         diff = max(abs(u_list[-1] - u_list[-2]).flatten())
 
+
+    for frame in plot_frames:
+        axs[0].clear()
+        axs[0].imshow(u_list[frame], origin="lower")
+        axs[1].clear()
+        axs[1].imshow(v_list[frame], origin="lower")
+        plt.savefig(f"{filename}_{frame}.png")
+
     def animate(i):
         axs[0].clear()
         axs[0].imshow(u_list[i], origin="lower")
         axs[1].clear()
         axs[1].imshow(v_list[i], origin="lower")
 
-    anim = animation.FuncAnimation(fig, animate, frames=len(u_list), interval=100)
-    anim.save(f"{filename}.mp4", fps=30)
+    if save_animation:
+        anim = animation.FuncAnimation(fig, animate, frames=len(u_list), interval=100)
+        anim.save(f"{filename}.mp4", fps=30)
 
 
 N = 100
-u = np.full((N+2, N+2), 0.5)
-v = np.zeros((N+2, N+2))
-v[46:56, 46:56] = 0.25
+u = np.full((N, N), 0.5)
+v = np.zeros((N, N))
+v[45:55, 45:55] = 0.25
 
-N = 100
-x, y = np.meshgrid(np.arange(N+2), np.arange(N+2))
-center = (N//2, N//2)
-radius = N//10
-u = np.full((N+2, N+2), 0.5)
-v = np.where((x-center[0])**2 + (y-center[1])**2 < radius**2, 0.25, 0.0)
+frames = [0, 100, 1000, 10000, 100000]
 
-# u += 0.05 * np.random.normal(0, 1, u.shape)
-# v += 0.05 * np.random.normal(0, 1, v.shape)
+filename = "normal_reaction/normal_reaction"
+# run_simulation(u, v, filename, num_frames=10, save_animation=True)
 
-filename = "circle"
-run_simulation(u, v, filename)
+
+found = False
+words = ["camera", "rhythm", "feature", "layer", "coconut", "ready", "need", "final", "north", "can", "early", "story", "stable", "report", "group", "depend", "employ", "problem", "monitor", "interest", "logic", "sausage", "toilet", "pencil"]
+counter = 0
+t_end = time.time() + 10
+while time.time() < t_end:
+    shuffled_words = np.random.shuffle(words)
+    counter += 1
+
+print(counter/10)
