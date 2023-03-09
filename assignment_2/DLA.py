@@ -1,17 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import pickle
+# plt.rcParams.update({'font.size': 22})
+
 
 start = time.time()
 
-def successive_over_relaxation(grid, cluster, t, omega = 1, delta_precision = 1e-4, make_pickle = False, pickle_name = ''):
+def successive_over_relaxation(grid, cluster, t, omega = 1, delta_precision = 1e-4):
     counter = 0
     delta = 1
     max_counter = 1e4
 
-    if make_pickle:
-        max_counter = 1e6
+
 
     N = len(grid)
 
@@ -31,9 +31,6 @@ def successive_over_relaxation(grid, cluster, t, omega = 1, delta_precision = 1e
 
         counter += 1
 
-    if make_pickle:
-        with open(f'N{N}delta{delta_precision}.pkl', 'wb') as save_file:
-            pickle.dump(grid, save_file)
     
     return grid, counter
 
@@ -58,6 +55,9 @@ def find_neighbors(cluster, N):
 
 def run_simulation(grid, cluster, eta, omega = 1, growth_steps=100, delta_precision = 1e-4, max_iterations=np.inf):
     total_counter = 0
+    return_after_plot = False
+
+
 
     for t in range(growth_steps):
         print(f"t = {t}, total_counter = {total_counter}", end='\r')
@@ -79,28 +79,42 @@ def run_simulation(grid, cluster, eta, omega = 1, growth_steps=100, delta_precis
 
         new_coords = np.random.choice(range(len(growth_candidates)), 1, p=probability_list)[0]
         cluster.append(growth_candidates[new_coords])
+        
+        # make image
+        if (t + 1) % 10 == 0:
+            plotgrid = grid.copy()
+            for coord in cluster:
+                plotgrid[coord[0]][coord[1]] = None
+                
+                # check whether top has been reached
+                if coord[0] == 99:
+                    return_after_plot = True
+
+            plt.imshow(plotgrid, origin='lower', cmap='gist_rainbow')
+            filename_t = t + 1
+            if filename_t < 100:
+                filename_t = '0' + str(filename_t)
+            plt.savefig(f'plots/DLA/eta_{eta}/eta_{eta}_t_{filename_t}.png')
+            plt.clf()
+
+            # return after top has been reached
+            if return_after_plot:
+                return grid, cluster
 
     return grid, cluster
 
-def make_pickle(N, delta_precision):
-    grid = np.zeros((N,N))
-    grid, counter = successive_over_relaxation(grid, [], 0, omega = 1, delta_precision = delta_precision, make_pickle = True, pickle_name = f'N{N}')
-    return
 
-def make_eta_plot(eta):
+def make_eta_plot(eta, growth_steps):
 
     N = 100 
-    growth_steps = 100
     # eta = 1
     omega = 1
     delta_precision = 1e-5
     delta_precision_pkl = 1e-5
 
-    # grid = np.zeros((N,N))
-    # grid = np.array([np.array([x/N for y in range(N)]) for x in range(N)])
+    grid = np.zeros((N,N))
+    grid = np.array([np.array([x/N for y in range(N)]) for x in range(N)])
 
-    with open(f"N{N}delta{delta_precision_pkl}.pkl", 'rb') as save_file:
-        grid = pickle.load(save_file)
 
     
 
@@ -109,35 +123,32 @@ def make_eta_plot(eta):
     grid, cluster = run_simulation(grid, cluster, eta, omega, growth_steps, delta_precision)
     print()
 
-    for coord in cluster:
-        grid[coord[0]][coord[1]] = None
-
-    plt.imshow(grid, origin='lower', cmap='gist_rainbow')
-    plt.savefig(f'eta_{eta}_t_{growth_steps}.png')
-    plt.clf()
 
 
-# make starting grid and save in pickle file
-# make_pickle(100, 1e-5)
-# quit()
+    # for coord in cluster:
+    #     grid[coord[0]][coord[1]] = None
+
+    # plt.imshow(grid, origin='lower', cmap='gist_rainbow')
+    # plt.savefig(f'plots/eta_{eta}_t_{growth_steps}.png')
+    # plt.clf()
 
 
-# plot starting grid that is loaded via pickle to check
-# N=100
-# delta_precision = 1e-5
-# with open(f"N{N}delta{delta_precision}.pkl", 'rb') as save_file:
-#     grid = pickle.load(save_file)
 
-# plt.imshow(grid, origin='lower', cmap='gist_rainbow')
-# plt.show()
-# quit()
 
-for eta in [0, 0.5, 1, 1.5, 2, 2.5]:
+
+eta_list = [0.5, 1, 1.5, 2, 2.5]
+growth_steps = 750
+
+
+
+for eta in eta_list:
     print(f"eta = {eta}")
-    make_eta_plot(eta)
+    make_eta_plot(eta, growth_steps)
+
+
 
 
 
 end = time.time()
 print()
-print(end - start)
+print(f'total time: {end - start:.2f}')
