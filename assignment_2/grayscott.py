@@ -1,9 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
+import matplotlib
 import time
 
-def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animation=False, num_frames=None):
+matplotlib.rcParams['font.size'] = 16
+
+def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animation=False, min_delta=1e-4):
     dt = 1
     dx = 1
     Du = 0.16
@@ -19,6 +22,7 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
     
 
     fig, axs = plt.subplots(1, 2)
+    fig.set_size_inches(10, 5)
 
     u_list = [u.copy()]
     v_list = [v.copy()]
@@ -29,7 +33,7 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
     laplace_u = np.zeros_like(u)
     laplace_v = np.zeros_like(v)
 
-    while diff > 1e-4 and t < tend:
+    while diff > min_delta and t < tend:
         print(f"t={t}, diff={diff:.2E}", end="\r")
 
         laplace_u[1:-1, 1:-1] = (np.roll(u, -1, axis=0)[1:-1, 1:-1] + np.roll(u, 1, axis=0)[1:-1, 1:-1] + np.roll(u, -1, axis=1)[1:-1, 1:-1] + np.roll(u, 1, axis=1)[1:-1, 1:-1] - 4 * u[1:-1, 1:-1]) / dx**2
@@ -66,12 +70,20 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
         t += dt
         diff = max(abs(u_list[-1] - u_list[-2]).flatten())
 
-
+    plot_frames.append(len(u_list) - 1)
     for frame in plot_frames:
+        if frame >= len(u_list):
+            continue
         axs[0].clear()
         axs[0].imshow(u_list[frame], origin="lower")
+        axs[0].set_title(f"U, t = {frame * plot_interval * dt}")
+        axs[0].get_xaxis().set_visible(False)
+        axs[0].get_yaxis().set_visible(False)
         axs[1].clear()
         axs[1].imshow(v_list[frame], origin="lower")
+        axs[1].set_title("V")
+        axs[1].get_xaxis().set_visible(False)
+        axs[1].get_yaxis().set_visible(False)
         plt.savefig(f"{filename}_{frame}.png")
 
     def animate(i):
@@ -90,18 +102,7 @@ u = np.full((N, N), 0.5)
 v = np.zeros((N, N))
 v[45:55, 45:55] = 0.25
 
-frames = [0, 100, 1000, 10000, 100000]
+frames = [0, 1, 5, 10, 20, 40, 80, 150, 300, 500, 1000]
 
 filename = "normal_reaction/normal_reaction"
-# run_simulation(u, v, filename, num_frames=10, save_animation=True)
-
-
-found = False
-words = ["camera", "rhythm", "feature", "layer", "coconut", "ready", "need", "final", "north", "can", "early", "story", "stable", "report", "group", "depend", "employ", "problem", "monitor", "interest", "logic", "sausage", "toilet", "pencil"]
-counter = 0
-t_end = time.time() + 10
-while time.time() < t_end:
-    shuffled_words = np.random.shuffle(words)
-    counter += 1
-
-print(counter/10)
+run_simulation(u, v, filename, plot_frames=frames, save_animation=False, min_delta=1e-4)
