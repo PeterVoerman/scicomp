@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 import matplotlib
 import time
+import os
 
 matplotlib.rcParams['font.size'] = 16
 
-def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animation=False, min_delta=1e-4):
+def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animation=False, min_delta=1e-4, show_both=True, plot_interval=100):
     dt = 1
     dx = 1
     Du = 0.16
@@ -14,15 +15,13 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
     f = 0.035
     k = 0.06
 
-    tend = 1e6
-    plot_interval = 100
+    tend = 5e4
+
+    if not os.path.isdir(filename.split("/")[0]):
+        os.mkdir(filename.split("/")[0])
 
     u = initial_u.copy()
     v = initial_v.copy()
-    
-
-    fig, axs = plt.subplots(1, 2)
-    fig.set_size_inches(10, 5)
 
     u_list = [u.copy()]
     v_list = [v.copy()]
@@ -62,6 +61,9 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
         u += dt * (Du * laplace_u - u * v**2 + f * (1 - u))
         v += dt * (Dv * laplace_v + u * v**2 - (f + k) * v)
 
+        u[u < 0] = 0
+        v[v < 0] = 0
+
 
         if t % plot_interval == 0:
             u_list.append(u.copy())
@@ -71,30 +73,69 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
         diff = max(abs(u_list[-1] - u_list[-2]).flatten())
 
     plot_frames.append(len(u_list) - 1)
-    for frame in plot_frames:
-        if frame >= len(u_list):
-            continue
-        axs[0].clear()
-        axs[0].imshow(u_list[frame], origin="lower")
-        axs[0].set_title(f"U, t = {frame * plot_interval * dt}")
-        axs[0].get_xaxis().set_visible(False)
-        axs[0].get_yaxis().set_visible(False)
-        axs[1].clear()
-        axs[1].imshow(v_list[frame], origin="lower")
-        axs[1].set_title("V")
-        axs[1].get_xaxis().set_visible(False)
-        axs[1].get_yaxis().set_visible(False)
-        plt.savefig(f"{filename}_{frame}.png")
+
+    if show_both:
+        fig, axs = plt.subplots(1, 2)
+        fig.set_size_inches(10, 5)
+        im1 = axs[0].imshow(u_list[0], origin="lower")
+        im2 = axs[1].imshow(v_list[0], origin="lower")
+        cb1 = fig.colorbar(im1, ax=axs[0])
+        cb2 = fig.colorbar(im2, ax=axs[1])
+        for frame in plot_frames:
+            if frame >= len(u_list):
+                continue
+
+            im1.set_data(u_list[frame])
+            im2.set_data(v_list[frame])
+            # axs[0].clear()
+            # axs[0].imshow(u_list[frame], origin="lower")
+            # axs[0].set_title(f"U, t = {frame * plot_interval * dt}")
+            # axs[0].get_xaxis().set_visible(False)
+            # axs[0].get_yaxis().set_visible(False)
+            # axs[1].clear()
+            # axs[1].imshow(v_list[frame], origin="lower")
+            # axs[1].set_title("V")
+            # axs[1].get_xaxis().set_visible(False)
+            # axs[1].get_yaxis().set_visible(False)
+            plt.savefig(f"{filename}_{frame}.png")
+
+    else:
+        for frame in plot_frames:
+            if frame >= len(u_list):
+                continue
+            plt.clf()
+            plt.imshow(u_list[frame], origin="lower")
+            plt.title(f"U, t = {frame * plot_interval * dt}")
+            plt.colorbar()
+            plt.axis("off")
+            plt.savefig(f"{filename}_u_{frame}.png")
+
+            plt.clf()
+            plt.imshow(v_list[frame], origin="lower")
+            plt.title(f"V, t = {frame * plot_interval * dt}")
+            plt.colorbar()
+            plt.axis("off")
+            plt.savefig(f"{filename}_v_{frame}.png")
+
+        
+    
 
     def animate(i):
-        axs[0].clear()
-        axs[0].imshow(u_list[i], origin="lower")
-        axs[1].clear()
-        axs[1].imshow(v_list[i], origin="lower")
+        im1.set_data(u_list[i])
+        im2.set_data(v_list[i])
+        cb1.update_normal(im1)
+        cb2.update_normal(im2)
 
     if save_animation:
+        fig, axs = plt.subplots(1, 2)
+        fig.set_size_inches(10, 5)
+        im1 = axs[0].imshow(u_list[0], origin="lower")
+        im2 = axs[1].imshow(v_list[0], origin="lower")
+        cb1 = fig.colorbar(im1, ax=axs[0])
+        cb2 = fig.colorbar(im2, ax=axs[1])
         anim = animation.FuncAnimation(fig, animate, frames=len(u_list), interval=100)
         anim.save(f"{filename}.mp4", fps=30)
+
 
 
 N = 100
@@ -104,5 +145,9 @@ v[45:55, 45:55] = 0.25
 
 frames = [0, 1, 5, 10, 20, 40, 80, 150, 300, 500, 1000]
 
-filename = "normal_reaction/normal_reaction"
-run_simulation(u, v, filename, plot_frames=frames, save_animation=False, min_delta=1e-4)
+filename = "high_f/high_f"
+filename = "high_du/high_du"
+filename = "zero_k/zero_k"
+filename = "test/test"
+
+run_simulation(u, v, filename, plot_frames=frames, save_animation=True, min_delta=1e-6, show_both=False, plot_interval=100)
