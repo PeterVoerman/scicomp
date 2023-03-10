@@ -55,7 +55,7 @@ def generate_tree(N, cluster, grid, growth_steps, prob, animation_gap=1e10):
 
         while not in_cluster:
             x, y = generate_step(x, y, N, cluster)
-            
+
             if not x:
                 break
 
@@ -67,11 +67,11 @@ def generate_tree(N, cluster, grid, growth_steps, prob, animation_gap=1e10):
                     in_cluster = True
                     cluster.append((x, y))
 
-            if counter % animation_gap == 0:
-                plt.imshow(grid, origin='lower')
-                plt.draw()
-                plt.pause(0.001)
-                plt.clf()
+            # if counter % animation_gap == 0:
+            #     plt.imshow(grid, origin='lower')
+            #     plt.draw()
+            #     plt.pause(0.001)
+            #     plt.clf()
 
             grid[y][x] = 0
             counter += 1
@@ -83,18 +83,47 @@ def generate_tree(N, cluster, grid, growth_steps, prob, animation_gap=1e10):
         
     
 N = 100
+growth_steps = 300
+neighbors_list = []
 
-grid = np.zeros((N,N))
+prob_list = np.arange(0.05, 1 + 0.05, 0.05)
 
-cluster = [(N//2, 0)]
-grid[0][N//2] = 1
+for prob in prob_list:
+    grid = np.zeros((N,N))
+    cluster = [(N//2, 0)]
+    grid[0][N//2] = 1
+    neighbors = 0
 
-growth_steps = 750
 
-cluster = generate_tree(N, cluster, grid, growth_steps, 0.025)
+    print(prob)
+    
+    cluster = generate_tree(N, cluster, grid, growth_steps, prob)
 
-for point in cluster:
-    grid[point[1]][point[0]] = 1
+    for point in cluster:
+        grid[point[1]][point[0]] = 1
+        if (point[0] + 1, point[1]) in cluster:
+            neighbors += 1
+        if (point[0] - 1, point[1]) in cluster:
+            neighbors += 1
+        if (point[0], point[1] + 1) in cluster:
+            neighbors += 1
+        if (point[0], point[1] - 1) in cluster:
+            neighbors += 1
+      
 
-plt.imshow(grid, origin='lower')
-plt.show()
+    # average neighbors for a cell in the cluster
+    neighbors_list.append(neighbors/growth_steps)
+
+
+    plt.imshow(grid, origin='lower')
+    plt.savefig(f'montecarloplots/p_{prob:.2f}.png')
+    plt.clf()
+
+    
+
+plt.plot(prob_list, neighbors_list)
+plt.xlabel(r'$p_s$')
+plt.ylabel('Average neighbors per cell')
+plt.savefig(f'montecarloplots/neighbors.png')
+plt.clf()
+
