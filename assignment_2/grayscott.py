@@ -15,7 +15,6 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
     f = 0.035
     k = 0.06
 
-    tend = 5e4
     tend = 1e5
 
     if not os.path.isdir(filename.split("/")[0]):
@@ -102,14 +101,12 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
             plt.clf()
             plt.imshow(u_list[frame], origin="lower")
             plt.title(f"U, t = {frame * plot_interval * dt}")
-            plt.colorbar()
             plt.axis("off")
             plt.savefig(f"{filename}_u_{frame}.png")
 
             plt.clf()
             plt.imshow(v_list[frame], origin="lower")
             plt.title(f"V, t = {frame * plot_interval * dt}")
-            plt.colorbar()
             plt.axis("off")
             plt.savefig(f"{filename}_v_{frame}.png")
 
@@ -135,15 +132,13 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
 N = 100
 u = np.full((N, N), 0.5)
 v = np.zeros((N, N))
-# v[45:55, 45:55] = 0.25
-v[20:30, 20:30] = 0.25
+v[45:55, 45:55] = 0.25
+# v[20:30, 20:30] = 0.25
 
 frames = [0, 1, 5, 10, 20, 40, 80, 150, 300, 500, 1000]
 
 filename = "high_f/high_f"
 filename = "high_du/high_du"
-filename = "zero_k/zero_k"
-filename = "test/test"
-filename = "left/left"
+filename = "low_du/low_du"
 
-run_simulation(u, v, filename, plot_frames=frames, save_animation=True, min_delta=1e-6, show_both=True, plot_interval=100)
+run_simulation(u, v, filename, plot_frames=frames, save_animation=True, min_delta=1e-6, show_both=False, plot_interval=100)
