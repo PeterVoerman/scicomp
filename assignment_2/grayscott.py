@@ -1,9 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
+import matplotlib
 import time
+import os
 
-def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animation=False, num_frames=None):
+matplotlib.rcParams['font.size'] = 16
+
+def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animation=False, min_delta=1e-4, show_both=True, plot_interval=100):
     dt = 1
     dx = 1
     Du = 0.16
@@ -11,14 +15,14 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
     f = 0.035
     k = 0.06
 
-    tend = 1e6
-    plot_interval = 100
+    tend = 5e4
+    tend = 1e5
+
+    if not os.path.isdir(filename.split("/")[0]):
+        os.mkdir(filename.split("/")[0])
 
     u = initial_u.copy()
     v = initial_v.copy()
-    
-
-    fig, axs = plt.subplots(1, 2)
 
     u_list = [u.copy()]
     v_list = [v.copy()]
@@ -29,7 +33,7 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
     laplace_u = np.zeros_like(u)
     laplace_v = np.zeros_like(v)
 
-    while diff > 1e-4 and t < tend:
+    while diff > min_delta and t < tend:
         print(f"t={t}, diff={diff:.2E}", end="\r")
 
         laplace_u[1:-1, 1:-1] = (np.roll(u, -1, axis=0)[1:-1, 1:-1] + np.roll(u, 1, axis=0)[1:-1, 1:-1] + np.roll(u, -1, axis=1)[1:-1, 1:-1] + np.roll(u, 1, axis=1)[1:-1, 1:-1] - 4 * u[1:-1, 1:-1]) / dx**2
@@ -58,6 +62,9 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
         u += dt * (Du * laplace_u - u * v**2 + f * (1 - u))
         v += dt * (Dv * laplace_v + u * v**2 - (f + k) * v)
 
+        u[u < 0] = 0
+        v[v < 0] = 0
+
 
         if t % plot_interval == 0:
             u_list.append(u.copy())
@@ -66,13 +73,48 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
         t += dt
         diff = max(abs(u_list[-1] - u_list[-2]).flatten())
 
+    plot_frames.append(len(u_list) - 1)
 
-    for frame in plot_frames:
-        axs[0].clear()
-        axs[0].imshow(u_list[frame], origin="lower")
-        axs[1].clear()
-        axs[1].imshow(v_list[frame], origin="lower")
-        plt.savefig(f"{filename}_{frame}.png")
+    if show_both:
+        fig, axs = plt.subplots(1, 2)
+        fig.set_size_inches(10, 5)
+        axs[0].imshow(u_list[0], origin="lower")
+        axs[1].imshow(v_list[0], origin="lower")
+        for frame in plot_frames:
+            if frame >= len(u_list):
+                continue
+            axs[0].clear()
+            axs[0].imshow(u_list[frame], origin="lower")
+            axs[0].set_title(f"U, t = {frame * plot_interval * dt}")
+            axs[0].get_xaxis().set_visible(False)
+            axs[0].get_yaxis().set_visible(False)
+            axs[1].clear()
+            axs[1].imshow(v_list[frame], origin="lower")
+            axs[1].set_title("V")
+            axs[1].get_xaxis().set_visible(False)
+            axs[1].get_yaxis().set_visible(False)
+            plt.savefig(f"{filename}_{frame}.png")
+
+    else:
+        for frame in plot_frames:
+            if frame >= len(u_list):
+                continue
+            plt.clf()
+            plt.imshow(u_list[frame], origin="lower")
+            plt.title(f"U, t = {frame * plot_interval * dt}")
+            plt.colorbar()
+            plt.axis("off")
+            plt.savefig(f"{filename}_u_{frame}.png")
+
+            plt.clf()
+            plt.imshow(v_list[frame], origin="lower")
+            plt.title(f"V, t = {frame * plot_interval * dt}")
+            plt.colorbar()
+            plt.axis("off")
+            plt.savefig(f"{filename}_v_{frame}.png")
+
+        
+    
 
     def animate(i):
         axs[0].clear()
@@ -81,27 +123,27 @@ def run_simulation(initial_u, initial_v, filename, plot_frames=[], save_animatio
         axs[1].imshow(v_list[i], origin="lower")
 
     if save_animation:
+        fig, axs = plt.subplots(1, 2)
+        fig.set_size_inches(10, 5)
+        axs[0].imshow(u_list[0], origin="lower")
+        axs[1].imshow(v_list[0], origin="lower")
         anim = animation.FuncAnimation(fig, animate, frames=len(u_list), interval=100)
         anim.save(f"{filename}.mp4", fps=30)
+
 
 
 N = 100
 u = np.full((N, N), 0.5)
 v = np.zeros((N, N))
-v[45:55, 45:55] = 0.25
+# v[45:55, 45:55] = 0.25
+v[20:30, 20:30] = 0.25
 
-frames = [0, 100, 1000, 10000, 100000]
+frames = [0, 1, 5, 10, 20, 40, 80, 150, 300, 500, 1000]
 
-filename = "normal_reaction/normal_reaction"
-# run_simulation(u, v, filename, num_frames=10, save_animation=True)
+filename = "high_f/high_f"
+filename = "high_du/high_du"
+filename = "zero_k/zero_k"
+filename = "test/test"
+filename = "left/left"
 
-
-found = False
-words = ["camera", "rhythm", "feature", "layer", "coconut", "ready", "need", "final", "north", "can", "early", "story", "stable", "report", "group", "depend", "employ", "problem", "monitor", "interest", "logic", "sausage", "toilet", "pencil"]
-counter = 0
-t_end = time.time() + 10
-while time.time() < t_end:
-    shuffled_words = np.random.shuffle(words)
-    counter += 1
-
-print(counter/10)
+run_simulation(u, v, filename, plot_frames=frames, save_animation=True, min_delta=1e-6, show_both=True, plot_interval=100)
