@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 15})
 
-def jacobi_iteration():
+def jacobi_iteration(delta_min):
     N = 100
 
     grid = np.zeros((N, N))
@@ -15,7 +15,7 @@ def jacobi_iteration():
     delta = 1
     delta_list = []
 
-    while delta > 1e-5:
+    while delta > delta_min:
         print(f"{max(abs(grid_list[-1] - grid_list[-2]).flatten()):.7f}", end='\r')
 
         grid[1:-1] = 0.25 * (np.roll(grid, 1, axis=0) + np.roll(grid, -1, axis=0) + np.roll(grid, 1, axis=1) + np.roll(grid, -1, axis=1))[1:-1]
@@ -30,7 +30,7 @@ def jacobi_iteration():
 
     return delta_list
 
-def gauss_seidel():
+def gauss_seidel(delta_min):
     N = 100
 
     grid = np.zeros((N, N))
@@ -42,7 +42,7 @@ def gauss_seidel():
     delta = 1
     delta_list = []
 
-    while delta > 1e-5:
+    while delta > delta_min:
         print(f"{max(abs(grid_list[-1] - grid_list[-2]).flatten()):.7f}", end='\r')
         new_grid = np.zeros((N, N))
         new_grid[-1] = 1
@@ -73,7 +73,7 @@ def sink_check(sinks, x, y):
             return True
     return False
 
-def successive_over_relaxation(omega, N=100, sinks = [], plot_grid=False):
+def successive_over_relaxation(omega, delta_min, N=100, sinks = [], plot_grid=False):
     grid = np.zeros((N, N))
     grid[-1] = 1
 
@@ -83,8 +83,8 @@ def successive_over_relaxation(omega, N=100, sinks = [], plot_grid=False):
     delta = 1
     delta_list = []
 
-    while delta > 1e-5 and delta < 1e5 and counter < 1e4:
-        print(counter, end='\r')
+    while delta > delta_min and delta < 1e2 and counter < 1e3:
+        print(f'{delta:.7f}', end='\r')
         # print(f"{max(abs(grid_list[-1] - grid_list[-2]).flatten()):.7f}", end='\r')
         new_grid = np.zeros((N, N))
         new_grid[-1] = 1
@@ -99,10 +99,10 @@ def successive_over_relaxation(omega, N=100, sinks = [], plot_grid=False):
         
         # vorig jaar
         for y in range(1, N - 1):
-            new_grid[y][0] = omega / 4 * (grid[y + 1][0] + new_grid[y - 1][0] + grid[y][1] + grid[y][-2]) + (1 - omega) * grid[y][0] if sink_check(sinks, x + 1, y) == False else 0
+            new_grid[y][0] = omega / 4 * (grid[y + 1][0] + new_grid[y - 1][0] + grid[y][1] + grid[y][-2]) + (1 - omega) * grid[y][0] if sink_check(sinks, 0, y) == False else 0
 
             for x in range(1, N - 1):
-                new_grid[y][x] = omega / 4 * (grid[y + 1][x] + new_grid[y - 1][x] + grid[y][x + 1] + new_grid[y][x - 1]) + (1 - omega) * grid[y][x] if sink_check(sinks, x + 1, y) == False else 0
+                new_grid[y][x] = omega / 4 * (grid[y + 1][x] + new_grid[y - 1][x] + grid[y][x + 1] + new_grid[y][x - 1]) + (1 - omega) * grid[y][x] if sink_check(sinks, x, y) == False else 0
 
             
             new_grid[y][-1] = omega / 4 * (grid[y + 1][-1] + new_grid[y - 1][-1] + grid[y][1] + new_grid[y][-2]) + (1 - omega) * grid[y][-1] if sink_check(sinks, x + 1, y) == False else 0
@@ -121,15 +121,24 @@ def successive_over_relaxation(omega, N=100, sinks = [], plot_grid=False):
     return delta_list
 
 
+delta_min = 1e-4
+# jacobi_list = jacobi_iteration(delta_min)
+# gauss_list = gauss_seidel(delta_min)
+# plt.plot(jacobi_list, label='Jacobi')
+# plt.plot(gauss_list, label='Gauss-Seidel')
 
-jacobi_list = jacobi_iteration()
-gauss_list = gauss_seidel()
-plt.plot(jacobi_list, label='Jacobi')
-plt.plot(gauss_list, label='Gauss-Seidel')
-for omega in np.arange(1.1, 1.8, 0.1):
+best = [0 for i in range(1000)]
+best_omega = 0
+for omega in np.arange(1.9, 2, 0.01):
     print(omega)
-    sor_list = successive_over_relaxation(omega)
-    plt.plot(sor_list, label=f'SOR {omega:.1f}')
+    sor_list = successive_over_relaxation(omega, delta_min)
+    
+    if len(sor_list) < len(best) and sor_list[-1] < 1:
+        best = sor_list
+        best_omega = omega
+    plt.plot(sor_list, label=f'SOR {omega:.2f}')
+
+print(f'omega: {best_omega:.2f}, iterations: {len(best)}')
 
 
 plt.legend()
@@ -139,14 +148,14 @@ plt.ylabel("Delta")
 plt.tight_layout()
 plt.savefig("jacobi_gauss_sor.png")
 
-
+quit()
 
 min_iterations = 1e5
 for N in [25, 50, 75, 100]:
     print(f"N = {N}")
     for omega in np.arange(1.4, 1.6, 0.01):
         print(f"omega = {omega}", end='\r')
-        delta_list = successive_over_relaxation(omega, N)
+        delta_list = successive_over_relaxation(omega, delta_min=1e-4, N=N)
         iterations = len(delta_list)
         if iterations < min_iterations and delta_list[-1] < 1:
             min_iterations = iterations
@@ -156,14 +165,16 @@ for N in [25, 50, 75, 100]:
 
 # for this to work, SOR function must return the final grid.
 sinks = [[(20,40),(70,80)], [(70, 80), (80, 96)]] # a sink = [(x1, x2), (y1, y2)]
-grid = successive_over_relaxation(1.5, 100, sinks, True)
+grid = successive_over_relaxation(1.5, 1e-5, 100, sinks, True)
 plt.imshow(grid, origin='lower', cmap='magma')
 plt.savefig("sinks.png")
 plt.clf()
 
-for omega in np.arange(1.1, 1.8, 0.1):
+
+print(omega_list)
+for omega in np.arange(1.1, 1.9, 0.1):
     print(omega)
-    sor_list = successive_over_relaxation(omega, 100, sinks)
+    sor_list = successive_over_relaxation(omega, delta_min, 100, sinks)
     plt.plot(sor_list, label=f'SOR {omega:.1f}')
 
 
