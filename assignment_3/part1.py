@@ -251,7 +251,7 @@ for L in range(10, 105, 5):
 
 counter = 0
 for freq in square_list:
-    plt.scatter([L_list[counter]] * len(freq), freq, s=1, c="b")
+    plt.scatter([L_list[counter]] * len(freq), freq, s=2, c="b")
     counter += 1
 
 plt.xticks(range(0, 105, 20))
@@ -262,7 +262,7 @@ plt.clf()
 
 counter = 0
 for freq in circle_list:
-    plt.scatter([L_list[counter]] * len(freq), freq, s=1, c="b")
+    plt.scatter([L_list[counter]] * len(freq), freq, s=2, c="b")
     counter += 1
 
 plt.xticks(range(0, 105, 20))
@@ -273,7 +273,7 @@ plt.clf()
 
 counter = 0
 for freq in rectangle_list:
-    plt.scatter([L_list[counter]] * len(freq), freq, s=1, c="b")
+    plt.scatter([L_list[counter]] * len(freq), freq, s=2, c="b")
     counter += 1
 
 plt.xticks(range(0, 105, 20))
@@ -342,6 +342,7 @@ for i in range(5):
     axs[i].set_title(f"t = {t_list[i]:.2f}")
 plt.tight_layout()
 plt.savefig("plots/animation.png")
+plt.clf()
 
 index = 5
 eigenvector = np.abs(result[1][:, index].reshape(L, L))
